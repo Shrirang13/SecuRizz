@@ -1,0 +1,10 @@
+torch>=2.2.0
+transformers>=4.42.0
+scikit-learn>=1.4.2
+slither-analyzer>=0.10.3
+pyyaml>=6.0.1
+numpy>=1.26.4
+pandas>=2.2.2
+tqdm>=4.66.4
+tokenizers>=0.15.2
+

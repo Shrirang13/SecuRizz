@@ -1,0 +1,26 @@
+{
+  "name": "securizz-oracle",
+  "version": "1.0.0",
+  "description": "Switchboard oracle service for SecuRizz",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@switchboard-xyz/solana.js": "^0.1.0",
+    "@solana/web3.js": "^1.87.6",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "bs58": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "ts-node": "^10.9.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.0"
+  }
+}

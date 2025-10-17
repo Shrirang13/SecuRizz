@@ -1,0 +1,28 @@
+model_name: microsoft/codebert-base
+max_length: 512
+vulnerability_types:
+  - reentrancy
+  - integer_overflow
+  - integer_underflow
+  - access_control
+  - timestamp_dependency
+  - tx_origin
+  - unchecked_calls
+  - denial_of_service
+  - tx_ordering
+  - uninitialized_storage
+  - delegatecall
+  - front_running
+  - arithmetic_precision
+  - unsafe_selfdestruct
+  - missing_pausing
+severity_mapping:
+  critical: 1.0
+  high: 0.8
+  medium: 0.5
+  low: 0.2
+mitigation_strategies:
+  reentrancy: "Use checks-effects-interactions, reentrancy guards."
+  integer_overflow: "Use SafeMath/checked arithmetic."
+  access_control: "Apply role-based access control, onlyOwner guards."
+

@@ -1,0 +1,29 @@
+# Logs
+logs
+*.log
+
+# Node
+node_modules/
+**/node_modules/
+dist/
+build/
+.next/
+coverage/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env/
+.envrc
+
+# Data/Models
+models/
+datasets/raw/
+datasets/processed/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs`nlogs`n*.log`n`n# Node`nnode_modules/`n**/node_modules/`ndist/`nbuild/`n.next/`ncoverage/`n`n# Python`n__pycache__/`n*.pyc`n.venv/`n.env/`n.envrc`n`n# Data/Models`nmodels/`ndatasets/raw/`ndatasets/processed/`n`n# OS`n.DS_Store`nThumbs.db`n
