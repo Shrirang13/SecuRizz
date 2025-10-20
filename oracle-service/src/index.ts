@@ -43,11 +43,12 @@ class SecuRizzOracle {
     console.log('Starting SecuRizz Oracle...');
     this.isRunning = true;
 
+    const pollInterval = parseInt(process.env.ORACLE_POLL_INTERVAL || '30000');
     setInterval(async () => {
       if (this.isRunning) {
         await this.processAnalysisRequests();
       }
-    }, 30000);
+    }, pollInterval);
 
     console.log('Oracle started successfully');
   }
@@ -164,6 +165,7 @@ async function main() {
     programId: process.env.SOLANA_PROGRAM_ID || 'ReplaceWithDeployedProgramId',
     switchboardQueue: process.env.SWITCHBOARD_QUEUE || 'devnet-default',
     backendUrl: process.env.BACKEND_URL || 'http://localhost:8000',
+    walletPath: process.env.SOLANA_WALLET_PATH || '~/.config/solana/id.json',
   };
 
   const oracle = new SecuRizzOracle(config);

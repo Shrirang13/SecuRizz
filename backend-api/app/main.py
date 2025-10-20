@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import hashlib
 import json
+import os
 from datetime import datetime
 
 from .database import get_db, create_tables, Contract, AuditReport, Feedback
@@ -16,9 +17,14 @@ from .ml_client import ml_client
 
 app = FastAPI(title="SecuRizz API", version="1.0.0")
 
+# Get CORS origins from environment
+cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
+if cors_origins == ["*"]:
+    cors_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -204,4 +210,6 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    host = os.getenv("BACKEND_HOST", "0.0.0.0")
+    port = int(os.getenv("BACKEND_PORT", "8000"))
+    uvicorn.run(app, host=host, port=port)

@@ -132,13 +132,13 @@ SecuRizz/
 
 1. **Clone the repo**
 ```bash
-git clone https://github.com/your-username/securizz.git
-cd securizz
+git clone https://github.com/Shrirang13/SecuRizz.git
+cd SecuRizz
 ```
 
 2. **Configure environment**
 ```bash
-cp .env.example .env
+cp env.example .env
 # Add your API keys
 ```
 
@@ -274,7 +274,7 @@ Democratizing smart contract security by making professional-grade audits access
 
 <div align="center">
 
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/your-username/securizz)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/Shrirang13/SecuRizz)
 [![Demo](https://img.shields.io/badge/Live%20Demo-Try%20Now-blue?style=for-the-badge&logo=vercel)](https://securizz-demo.vercel.app)
 [![Video](https://img.shields.io/badge/Demo%20Video-Watch-red?style=for-the-badge&logo=youtube)](https://youtube.com/watch?v=demo)
 
