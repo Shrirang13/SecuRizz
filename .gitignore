@@ -34,6 +34,11 @@ models/
 datasets/raw/
 datasets/processed/
 
+# Local databases and artifacts
+*.db
+backend-api/*.db
+ml-engine/evaluation_results.json
+
 # OS
 .DS_Store
 Thumbs.db
