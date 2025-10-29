@@ -1,21 +1,38 @@
 model_name: microsoft/codebert-base
 max_length: 512
 vulnerability_types:
-  - reentrancy
+  # Rust-specific vulnerabilities
+  - unsafe_code
   - integer_overflow
   - integer_underflow
-  - access_control
-  - timestamp_dependency
-  - tx_origin
-  - unchecked_calls
-  - denial_of_service
-  - tx_ordering
-  - uninitialized_storage
-  - delegatecall
-  - front_running
-  - arithmetic_precision
-  - unsafe_selfdestruct
-  - missing_pausing
+  - panic_handling
+  - memory_leak
+  - use_after_free
+  - buffer_overflow
+  - null_pointer
+  - double_free
+  - format_string
+  - race_condition
+  - deadlock
+  - resource_exhaustion
+  - infinite_loop
+  - stack_overflow
+  # Solana-specific vulnerabilities
+  - account_validation
+  - program_derivation
+  - seed_validation
+  - signature_verification
+  - instruction_validation
+  - data_validation
+  - authority_validation
+  - rent_exemption
+  - account_lamports
+  - program_ownership
+  - cross_program_invocation
+  - syscall_validation
+  - token_program
+  - associated_token
+  - pda_validation
 severity_mapping:
   critical: 1.0
   high: 0.8

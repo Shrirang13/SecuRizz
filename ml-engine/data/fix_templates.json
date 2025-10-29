@@ -1,0 +1,128 @@
+{
+  "reentrancy": {
+    "title": "Reentrancy Vulnerability",
+    "description": "External calls before state changes can lead to reentrancy attacks",
+    "severity": "CRITICAL",
+    "fix_patterns": [
+      {
+        "name": "Checks-Effects-Interactions Pattern",
+        "description": "Perform all checks first, update state, then make external calls",
+        "code_example": "function withdraw() external nonReentrant {\n    uint256 amount = balances[msg.sender];\n    require(amount > 0, 'No balance');\n    balances[msg.sender] = 0;\n    (bool success, ) = msg.sender.call{value: amount}('');\n    require(success, 'Transfer failed');\n}"
+      },
+      {
+        "name": "Reentrancy Guard",
+        "description": "Use OpenZeppelin's ReentrancyGuard",
+        "code_example": "import '@openzeppelin/contracts/security/ReentrancyGuard.sol';\n\ncontract MyContract is ReentrancyGuard {\n    function withdraw() external nonReentrant {\n        // Safe withdrawal logic\n    }\n}"
+      }
+    ],
+    "testing_advice": "Test with malicious contract that calls back into your function"
+  },
+  "integer_overflow": {
+    "title": "Integer Overflow/Underflow",
+    "description": "Arithmetic operations can overflow/underflow without proper checks",
+    "severity": "HIGH",
+    "fix_patterns": [
+      {
+        "name": "Solidity 0.8+ Built-in Checks",
+        "description": "Use Solidity 0.8+ which has built-in overflow protection",
+        "code_example": "pragma solidity ^0.8.0;\n\ncontract SafeMath {\n    function add(uint256 a, uint256 b) public pure returns (uint256) {\n        return a + b; // Safe in Solidity 0.8+\n    }\n}"
+      },
+      {
+        "name": "SafeMath Library",
+        "description": "Use OpenZeppelin's SafeMath for older Solidity versions",
+        "code_example": "import '@openzeppelin/contracts/utils/math/SafeMath.sol';\n\nusing SafeMath for uint256;\n\nfunction add(uint256 a, uint256 b) public pure returns (uint256) {\n    return a.add(b);\n}"
+      }
+    ],
+    "testing_advice": "Test with maximum uint256 values and zero values"
+  },
+  "access_control": {
+    "title": "Access Control Issues",
+    "description": "Missing or insufficient access controls on sensitive functions",
+    "severity": "HIGH",
+    "fix_patterns": [
+      {
+        "name": "Owner-Only Modifier",
+        "description": "Restrict functions to contract owner",
+        "code_example": "address public owner;\nmodifier onlyOwner() {\n    require(msg.sender == owner, 'Not owner');\n    _;\n}\n\nfunction sensitiveFunction() external onlyOwner {\n    // Protected logic\n}"
+      },
+      {
+        "name": "Role-Based Access Control",
+        "description": "Use OpenZeppelin's AccessControl for complex permissions",
+        "code_example": "import '@openzeppelin/contracts/access/AccessControl.sol';\n\ncontract MyContract is AccessControl {\n    bytes32 public constant ADMIN_ROLE = keccak256('ADMIN_ROLE');\n    \n    function sensitiveFunction() external onlyRole(ADMIN_ROLE) {\n        // Protected logic\n    }\n}"
+      }
+    ],
+    "testing_advice": "Test with unauthorized addresses attempting to call protected functions"
+  },
+  "tx_origin": {
+    "title": "Transaction Origin Usage",
+    "description": "Using tx.origin for authentication can be exploited by malicious contracts",
+    "severity": "MEDIUM",
+    "fix_patterns": [
+      {
+        "name": "Use msg.sender Instead",
+        "description": "Replace tx.origin with msg.sender for authentication",
+        "code_example": "// WRONG\nrequire(tx.origin == owner, 'Not owner');\n\n// CORRECT\nrequire(msg.sender == owner, 'Not owner');"
+      },
+      {
+        "name": "Two-Factor Authentication",
+        "description": "Use multiple authentication factors",
+        "code_example": "mapping(address => bool) public authorized;\n\nmodifier onlyAuthorized() {\n    require(authorized[msg.sender], 'Not authorized');\n    _;\n}"
+      }
+    ],
+    "testing_advice": "Test with contract calling your contract (tx.origin will be different from msg.sender)"
+  },
+  "timestamp_dependency": {
+    "title": "Timestamp Dependency",
+    "description": "Using block.timestamp for critical logic can be manipulated by miners",
+    "severity": "MEDIUM",
+    "fix_patterns": [
+      {
+        "name": "Commit-Reveal Scheme",
+        "description": "Use commit-reveal for time-sensitive operations",
+        "code_example": "mapping(bytes32 => uint256) public commitments;\n\nfunction commit(bytes32 hash) external {\n    commitments[hash] = block.timestamp;\n}\n\nfunction reveal(uint256 value, uint256 salt) external {\n    bytes32 hash = keccak256(abi.encodePacked(value, salt));\n    require(commitments[hash] > 0, 'Invalid commitment');\n    // Process value\n}"
+      },
+      {
+        "name": "Oracle-Based Time",
+        "description": "Use external oracle for accurate time",
+        "code_example": "contract TimeOracle {\n    uint256 public currentTime;\n    \n    function updateTime() external {\n        // Update from external time source\n    }\n}"
+      }
+    ],
+    "testing_advice": "Test with different block timestamps and verify behavior"
+  },
+  "unchecked_calls": {
+    "title": "Unchecked External Calls",
+    "description": "External calls without checking return values can lead to silent failures",
+    "severity": "HIGH",
+    "fix_patterns": [
+      {
+        "name": "Check Return Values",
+        "description": "Always check return values from external calls",
+        "code_example": "(bool success, ) = target.call{value: amount}('');\nrequire(success, 'Call failed');"
+      },
+      {
+        "name": "Use OpenZeppelin's Address",
+        "description": "Use Address.sendValue for safe transfers",
+        "code_example": "import '@openzeppelin/contracts/utils/Address.sol';\n\nusing Address for address payable;\n\nfunction transfer(address payable to, uint256 amount) external {\n    to.sendValue(amount);\n}"
+      }
+    ],
+    "testing_advice": "Test with contracts that revert on receive"
+  },
+  "denial_of_service": {
+    "title": "Denial of Service",
+    "description": "Contract can be made unusable through various attack vectors",
+    "severity": "HIGH",
+    "fix_patterns": [
+      {
+        "name": "Gas Limit Considerations",
+        "description": "Avoid unbounded loops and large operations",
+        "code_example": "function processBatch(address[] calldata users, uint256 batchSize) external {\n    require(batchSize <= 100, 'Batch too large');\n    for (uint256 i = 0; i < batchSize && i < users.length; i++) {\n        // Process user\n    }\n}"
+      },
+      {
+        "name": "Circuit Breaker Pattern",
+        "description": "Implement emergency stop functionality",
+        "code_example": "bool public paused = false;\n\nmodifier whenNotPaused() {\n    require(!paused, 'Contract paused');\n    _;\n}\n\nfunction emergencyPause() external onlyOwner {\n    paused = true;\n}"
+      }
+    ],
+    "testing_advice": "Test with maximum gas limits and large data sets"
+  }
+}

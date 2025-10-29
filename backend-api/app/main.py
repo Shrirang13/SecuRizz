@@ -14,6 +14,9 @@ from .models import (
 )
 from .ipfs_client import ipfs_client
 from .ml_client import ml_client
+from .solana_client import solana_client
+from .security import security_manager, require_auth, rate_limit_check, validate_input
+from .cross_chain import cross_chain_manager
 
 app = FastAPI(title="SecuRizz API", version="1.0.0")
 
@@ -41,6 +44,8 @@ async def root():
 
 
 @app.post("/analyze", response_model=AnalysisResponse)
+@rate_limit_check("user_id")
+@validate_input(["source_code", "contract_name"])
 async def analyze_contract(
     request: AnalysisRequest,
     db: Session = Depends(get_db)
@@ -82,7 +87,18 @@ async def analyze_contract(
             "contract_name": request.contract_name
         }
         
+        # Store on IPFS
         ipfs_cid = ipfs_client.pin_json(report_data, f"audit_report_{ml_result['contract_hash'][:8]}")
+        
+        # Submit to Solana blockchain
+        solana_tx = await solana_client.submit_audit_proof(
+            ml_result["contract_hash"],
+            hashlib.sha256(json.dumps(report_data, sort_keys=True).encode()).hexdigest(),
+            ipfs_cid,
+            int(ml_result["risk_score"] * 100),
+            int((1 - ml_result["risk_score"]) * 100),
+            "mock_contract_address"
+        )
         
         report_content = json.dumps(report_data, sort_keys=True)
         report_hash = hashlib.sha256(report_content.encode()).hexdigest()
@@ -201,6 +217,30 @@ async def submit_feedback(
         accuracy_rating=feedback_entry.accuracy_rating,
         created_at=feedback_entry.created_at
     )
+
+
+@app.get("/verify/{contract_address}")
+async def verify_contract_on_chain(contract_address: str):
+    """
+    Verify contract audit status on Solana blockchain
+    """
+    try:
+        # This would integrate with Solana RPC to query the program
+        # For now, return a mock response
+        return {
+            "contract_address": contract_address,
+            "audit_status": "verified",
+            "audit_score": 85,
+            "risk_score": 0.15,
+            "timestamp": datetime.utcnow().isoformat(),
+            "explorer_link": f"https://explorer.solana.com/address/{contract_address}",
+            "verified": True
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Verification failed: {str(e)}"
+        )
 
 
 @app.get("/health")

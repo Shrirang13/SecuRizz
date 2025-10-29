@@ -50,6 +50,14 @@ class SecuRizzOracle {
       }
     }, pollInterval);
 
+    // Integrity verification every 5 minutes
+    const integrityInterval = 5 * 60 * 1000; // 5 minutes
+    setInterval(async () => {
+      if (this.isRunning) {
+        await this.verifyProofIntegrity();
+      }
+    }, integrityInterval);
+
     console.log('Oracle started successfully');
   }
 
@@ -71,6 +79,85 @@ class SecuRizzOracle {
     } catch (error) {
       console.error('Error processing analysis requests:', error);
     }
+  }
+
+  private async verifyProofIntegrity(): Promise<void> {
+    try {
+      console.log('Verifying proof integrity...');
+      
+      // Get all submitted proofs
+      const proofs = await this.getSubmittedProofs();
+      
+      for (const proof of proofs) {
+        try {
+          // Re-fetch IPFS content
+          const ipfsContent = await this.fetchIpfsContent(proof.ipfs_cid);
+          
+          if (ipfsContent) {
+            // Calculate SHA256 hash
+            const currentHash = this.calculateSha256(JSON.stringify(ipfsContent));
+            
+            // Compare with stored hash
+            if (currentHash !== proof.report_hash) {
+              console.warn(`Hash mismatch detected for proof ${proof.contract_hash}`);
+              await this.emitIntegrityWarning(proof);
+            } else {
+              console.log(`Integrity verified for proof ${proof.contract_hash}`);
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to verify proof ${proof.contract_hash}:`, error);
+        }
+      }
+    } catch (error) {
+      console.error('Error in proof integrity verification:', error);
+    }
+  }
+
+  private async fetchIpfsContent(ipfsCid: string): Promise<any> {
+    try {
+      const response = await axios.get(`https://gateway.pinata.cloud/ipfs/${ipfsCid}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to fetch IPFS content for ${ipfsCid}:`, error);
+      return null;
+    }
+  }
+
+  private calculateSha256(content: string): string {
+    const crypto = require('crypto');
+    return crypto.createHash('sha256').update(content).digest('hex');
+  }
+
+  private async emitIntegrityWarning(proof: any): Promise<void> {
+    try {
+      // Emit AuditVerified event with integrity warning
+      const instruction = await this.createIntegrityWarningInstruction(proof);
+      const signature = await this.connection.sendTransaction(instruction, []);
+      await this.connection.confirmTransaction(signature);
+      
+      console.log(`Integrity warning emitted for ${proof.contract_hash}: ${signature}`);
+    } catch (error) {
+      console.error('Failed to emit integrity warning:', error);
+    }
+  }
+
+  private async createIntegrityWarningInstruction(proof: any) {
+    // Create instruction for integrity warning
+    return {
+      programId: this.programId,
+      keys: [
+        { pubkey: new PublicKey('11111111111111111111111111111111'), isSigner: false, isWritable: true },
+        { pubkey: new PublicKey('11111111111111111111111111111111'), isSigner: true, isWritable: false },
+      ],
+      data: Buffer.from([]),
+    };
+  }
+
+  private async getSubmittedProofs(): Promise<any[]> {
+    // This would query the Solana program for all submitted proofs
+    // For now, return empty array
+    return [];
   }
 
   private async submitProofToChain(report: any): Promise<void> {

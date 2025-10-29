@@ -1,0 +1,41 @@
+{
+  "samples": [
+    {
+      "source_code": "use anchor_lang::prelude::*;\n\n#[program]\npub mod vulnerable_program {\n    use super::*;\n\n    pub fn transfer_funds(ctx: Context<TransferFunds>, amount: u64) -> Result<()> {\n        let from_account = &mut ctx.accounts.from_account;\n        let to_account = &mut ctx.accounts.to_account;\n        \n        // VULNERABILITY: No access control - anyone can call this\n        from_account.balance -= amount;\n        to_account.balance += amount;\n        \n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct TransferFunds<'info> {\n    #[account(mut)]\n    pub from_account: Account<'info, UserAccount>,\n    #[account(mut)]\n    pub to_account: Account<'info, UserAccount>,\n    pub user: Signer<'info>,\n}\n\n#[account]\npub struct UserAccount {\n    pub balance: u64,\n    pub owner: Pubkey,\n}",
+      "vulnerabilities": ["access_control", "unchecked_account_validation"],
+      "description": "Missing access control allows anyone to transfer funds"
+    },
+    {
+      "source_code": "use anchor_lang::prelude::*;\n\n#[program]\npub mod cpi_vulnerable {\n    use super::*;\n\n    pub fn unsafe_cpi_call(ctx: Context<UnsafeCpi>) -> Result<()> {\n        let cpi_program = ctx.accounts.token_program.to_account_info();\n        let cpi_accounts = token::Transfer {\n            from: ctx.accounts.from.to_account_info(),\n            to: ctx.accounts.to.to_account_info(),\n            authority: ctx.accounts.authority.to_account_info(),\n        };\n        \n        // VULNERABILITY: CPI call without proper validation\n        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);\n        token::transfer(cpi_ctx, 1000)?;\n        \n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct UnsafeCpi<'info> {\n    #[account(mut)]\n    pub from: Account<'info, TokenAccount>,\n    #[account(mut)]\n    pub to: Account<'info, TokenAccount>,\n    pub authority: Signer<'info>,\n    pub token_program: Program<'info, Token>,\n}",
+      "vulnerabilities": ["unchecked_cpi_call", "access_control"],
+      "description": "CPI call without proper account validation"
+    },
+    {
+      "source_code": "use anchor_lang::prelude::*;\n\n#[program]\npub mod reentrancy_vulnerable {\n    use super::*;\n\n    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {\n        let user_account = &mut ctx.accounts.user_account;\n        \n        // VULNERABILITY: State change after external call\n        require!(user_account.balance >= amount, ErrorCode::InsufficientFunds);\n        \n        // External call before updating state\n        **ctx.accounts.user.to_account_info().try_borrow_mut_lamports()? -= amount;\n        **ctx.accounts.user.to_account_info().try_borrow_mut_lamports()? += amount;\n        \n        // State update after external call - vulnerable to reentrancy\n        user_account.balance -= amount;\n        \n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct Withdraw<'info> {\n    #[account(mut)]\n    pub user_account: Account<'info, UserAccount>,\n    #[account(mut)]\n    pub user: Signer<'info>,\n    pub system_program: Program<'info, System>,\n}",
+      "vulnerabilities": ["reentrancy", "unchecked_arithmetic"],
+      "description": "Reentrancy vulnerability in withdrawal function"
+    },
+    {
+      "source_code": "use anchor_lang::prelude::*;\n\n#[program]\npub mod overflow_vulnerable {\n    use super::*;\n\n    pub fn calculate_rewards(ctx: Context<CalculateRewards>, multiplier: u64) -> Result<()> {\n        let user_account = &mut ctx.accounts.user_account;\n        \n        // VULNERABILITY: Potential integer overflow\n        let rewards = user_account.staked_amount * multiplier * 1000;\n        \n        user_account.pending_rewards = rewards;\n        \n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct CalculateRewards<'info> {\n    #[account(mut)]\n    pub user_account: Account<'info, UserAccount>,\n}\n\n#[account]\npub struct UserAccount {\n    pub staked_amount: u64,\n    pub pending_rewards: u64,\n}",
+      "vulnerabilities": ["integer_overflow", "unchecked_arithmetic"],
+      "description": "Integer overflow in reward calculation"
+    },
+    {
+      "source_code": "use anchor_lang::prelude::*;\n\n#[program]\npub mod account_validation_vulnerable {\n    use super::*;\n\n    pub fn update_user_data(ctx: Context<UpdateUserData>, new_data: String) -> Result<()> {\n        let user_account = &mut ctx.accounts.user_account;\n        \n        // VULNERABILITY: No account validation\n        user_account.data = new_data;\n        \n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct UpdateUserData<'info> {\n    #[account(mut)]\n    pub user_account: Account<'info, UserAccount>,\n    // VULNERABILITY: Missing signer constraint\n    pub user: UncheckedAccount<'info>,\n}\n\n#[account]\npub struct UserAccount {\n    pub data: String,\n    pub owner: Pubkey,\n}",
+      "vulnerabilities": ["unchecked_account_validation", "access_control"],
+      "description": "Missing account validation and signer constraints"
+    }
+  ],
+  "metadata": {
+    "total_samples": 5,
+    "vulnerability_distribution": {
+      "access_control": 3,
+      "unchecked_account_validation": 3,
+      "unchecked_cpi_call": 1,
+      "reentrancy": 1,
+      "unchecked_arithmetic": 2,
+      "integer_overflow": 1
+    },
+    "description": "Solana-specific vulnerability samples for Anchor programs"
+  }
+}
